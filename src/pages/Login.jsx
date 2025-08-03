@@ -1,21 +1,34 @@
 import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
+  const navigate = useNavigate();
+
   const handleSuccess = async (credentialResponse) => {
     try {
-      const res = await axios.post("http://localhost:5000/auth/google", {
-        credential: credentialResponse.credential,
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/google`, {
+        token: credentialResponse.credential,
       });
 
-      // Save token to localStorage or context
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      const { token, user, isNewUser } = res.data;
 
-      alert("Login successful!");
-      window.location.href = "/dashboard"; // or navigate in React
+      // Save token and user info
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Redirect logic
+      if (isNewUser || !user.role) {
+        navigate("/choose-role");
+      } else if (user.role === "student") {
+        navigate("/student/dashboard");
+      } else if (user.role === "teacher") {
+        navigate("/teacher/dashboard");
+      } else {
+        navigate("/error");
+      }
     } catch (err) {
       console.error("Login failed:", err);
     }
@@ -30,6 +43,5 @@ const Login = () => {
     </div>
   );
 };
-const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 export default Login;

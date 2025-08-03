@@ -30,5 +30,6 @@ const Login = () => {
     </div>
   );
 };
-
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 export default Login;

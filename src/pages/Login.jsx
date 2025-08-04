@@ -1,42 +1,30 @@
-import React from "react";
-import { GoogleLogin } from "@react-oauth/google";
-import API from "../api"; // Make sure you have this setup properly
+import React from 'react';
 
 const Login = () => {
-  const handleSuccess = async (credentialResponse) => {
-    try {
-      const token = credentialResponse.credential;
-
-      const res = await API.post("/auth/google", {
-        token: token,
-      });
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-
-      alert("Login successful!");
-
-      if (res.data.user.role === "student") {
-        window.location.href = "/student";
-      } else if (res.data.user.role === "teacher") {
-        window.location.href = "/teacher";
-      } else {
-        window.location.href = "/choose-role";
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
-      alert("Login failed. Please check console for details.");
-    }
+  const handleGoogleLogin = () => {
+    const backendURL = 'https://qroll-backend-production.up.railway.app';
+    window.location.href = `${backendURL}/api/auth/google`;
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-black text-white">
-      <div className="bg-gray-800 p-6 rounded shadow text-center">
-        <h1 className="text-2xl font-bold mb-4">Login with Google</h1>
-        <GoogleLogin
-          onSuccess={handleSuccess}
-          onError={() => alert("Google Login Failed")}
-        />
+    <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="text-center space-y-8">
+        <div>
+          <h1 className="text-4xl font-bold">Login with Google</h1>
+          <p className="text-gray-400 mt-2">Welcome back! Sign in to continue.</p>
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          className="bg-white text-black px-6 py-3 rounded-md shadow-md hover:shadow-lg hover:scale-105 transition-transform flex items-center justify-center gap-3"
+        >
+          <img src="/google.svg" alt="Google" className="w-5 h-5" />
+          Sign in as krish
+        </button>
+
+        <footer className="text-sm text-gray-500">
+          “Smart attendance starts here.” ✨
+        </footer>
       </div>
     </div>
   );

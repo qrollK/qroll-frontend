@@ -1,10 +1,41 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
+  const navigate = useNavigate();
+
+  const backendURL = 'https://qroll-backend-production.up.railway.app';
+
   const handleGoogleLogin = () => {
-    const backendURL = 'https://qroll-backend-production.up.railway.app';
     window.location.href = `${backendURL}/api/auth/google`;
   };
+
+  // Handle redirect from Google OAuth
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const user = urlParams.get('user');
+
+    if (token && user) {
+      // Save user and token in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', user);
+
+      try {
+        const parsedUser = JSON.parse(decodeURIComponent(user));
+        if (parsedUser?.role === 'student') {
+          navigate('/student');
+        } else if (parsedUser?.role === 'teacher') {
+          navigate('/teacher');
+        } else {
+          navigate('/choose-role');
+        }
+      } catch (error) {
+        console.error('Error parsing user:', error);
+      }
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">

@@ -1,43 +1,30 @@
 import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import axios from "axios";
+import API from "../api"; // Make sure you have this setup properly
 
 const Login = () => {
   const handleSuccess = async (credentialResponse) => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const token = credentialResponse.credential;
 
-      if (!backendUrl) {
-        console.error("VITE_BACKEND_URL is not defined.");
-        alert("Backend URL is not configured.");
-        return;
-      }
-
-      console.log("Backend URL:", backendUrl);
-      console.log("Credential Response:", credentialResponse);
-
-      const res = await axios.post(`${backendUrl}/api/auth/google`, {
-        token: credentialResponse.credential,
-      }, {
-        withCredentials: true, // Optional: needed only if you use cookies
+      const res = await API.post("/auth/google", {
+        token: token,
       });
 
-      const { token, user } = res.data;
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
       alert("Login successful!");
 
-      if (user.role === "student") {
-        window.location.href = "/student-dashboard";
-      } else if (user.role === "teacher") {
-        window.location.href = "/admin-dashboard";
+      if (res.data.user.role === "student") {
+        window.location.href = "/student";
+      } else if (res.data.user.role === "teacher") {
+        window.location.href = "/teacher";
       } else {
         window.location.href = "/choose-role";
       }
-
     } catch (error) {
-      console.error("Login failed:", error.response || error.message || error);
+      console.error("Login failed:", error);
       alert("Login failed. Please check console for details.");
     }
   };

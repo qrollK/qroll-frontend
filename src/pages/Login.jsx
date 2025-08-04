@@ -7,7 +7,7 @@ const Login = () => {
   const handleSuccess = async (credentialResponse) => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
+      console.log("Backend URL:", backendUrl);
       const res = await axios.post(`${backendUrl}/api/auth/google`, {
         token: credentialResponse.credential,
       });

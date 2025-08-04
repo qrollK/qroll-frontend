@@ -1,7 +1,6 @@
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -11,12 +10,20 @@ export default function LoginPage() {
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/auth/google`,
-          { token: tokenResponse.credential }
-        );
+        // Fetch user info using access_token
+        const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        });
+
+        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/google`, {
+          token: tokenResponse.access_token,
+          userInfo: userInfo.data,
+        });
 
         localStorage.setItem("token", res.data.token);
+
         if (!res.data.user.role) {
           navigate("/choose-role");
         } else if (res.data.user.role === "student") {
@@ -31,6 +38,7 @@ export default function LoginPage() {
     onError: () => {
       console.error("Google Login Failed");
     },
+    flow: "implicit", // important for getting access_token
   });
 
   return (

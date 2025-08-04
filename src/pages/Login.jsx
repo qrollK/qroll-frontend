@@ -1,6 +1,7 @@
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -10,23 +11,29 @@ export default function LoginPage() {
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        // Fetch user info using access_token
-        const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        const { access_token } = tokenResponse;
+
+        // Get user info from Google using access token
+        const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: {
-            Authorization: `Bearer ${tokenResponse.access_token}`,
+            Authorization: `Bearer ${access_token}`,
           },
         });
 
-        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/google`, {
-          token: tokenResponse.access_token,
-          userInfo: userInfo.data,
-        });
+        const res = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/auth/google`,
+          {
+            token: access_token,
+            userInfo: userInfoRes.data,
+          }
+        );
 
         localStorage.setItem("token", res.data.token);
+        const user = res.data.user;
 
-        if (!res.data.user.role) {
+        if (!user.role) {
           navigate("/choose-role");
-        } else if (res.data.user.role === "student") {
+        } else if (user.role === "student") {
           navigate("/student");
         } else {
           navigate("/teacher");
@@ -38,7 +45,6 @@ export default function LoginPage() {
     onError: () => {
       console.error("Google Login Failed");
     },
-    flow: "implicit", // important for getting access_token
   });
 
   return (

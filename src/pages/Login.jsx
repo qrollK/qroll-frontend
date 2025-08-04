@@ -6,28 +6,39 @@ const Login = () => {
   const handleSuccess = async (credentialResponse) => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+      if (!backendUrl) {
+        console.error("VITE_BACKEND_URL is not defined.");
+        alert("Backend URL is not configured.");
+        return;
+      }
+
       console.log("Backend URL:", backendUrl);
       console.log("Credential Response:", credentialResponse);
 
       const res = await axios.post(`${backendUrl}/api/auth/google`, {
         token: credentialResponse.credential,
+      }, {
+        withCredentials: true, // Optional: needed only if you use cookies
       });
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      const { token, user } = res.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
       alert("Login successful!");
 
-      if (res.data.user.role === "student") {
-        window.location.href = "/student";
-      } else if (res.data.user.role === "teacher") {
-        window.location.href = "/teacher";
+      if (user.role === "student") {
+        window.location.href = "/student-dashboard";
+      } else if (user.role === "teacher") {
+        window.location.href = "/admin-dashboard";
       } else {
         window.location.href = "/choose-role";
       }
+
     } catch (error) {
-      console.error("Login failed:", error);
-      alert("Login failed. Please try again.");
+      console.error("Login failed:", error.response || error.message || error);
+      alert("Login failed. Please check console for details.");
     }
   };
 
@@ -37,7 +48,7 @@ const Login = () => {
         <h1 className="text-2xl font-bold mb-4">Login with Google</h1>
         <GoogleLogin
           onSuccess={handleSuccess}
-          onError={() => alert("Login Failed")}
+          onError={() => alert("Google Login Failed")}
         />
       </div>
     </div>

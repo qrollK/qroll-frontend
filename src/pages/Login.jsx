@@ -1,7 +1,6 @@
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -13,13 +12,14 @@ export default function LoginPage() {
       try {
         const { access_token } = tokenResponse;
 
-        // Get user info from Google using access token
+        // Fetch user info from Google using access token
         const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: {
             Authorization: `Bearer ${access_token}`,
           },
         });
 
+        // Send access_token and user info to backend
         const res = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/auth/google`,
           {
@@ -29,6 +29,7 @@ export default function LoginPage() {
         );
 
         localStorage.setItem("token", res.data.token);
+
         const user = res.data.user;
 
         if (!user.role) {

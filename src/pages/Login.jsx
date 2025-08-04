@@ -1,6 +1,7 @@
 import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
+console.log("Backend URL:", backendUrl);
 
 const Login = () => {
   const handleSuccess = async (credentialResponse) => {

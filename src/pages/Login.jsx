@@ -6,8 +6,8 @@ const Login = () => {
   const handleSuccess = async (credentialResponse) => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      console.log("Backend URL:", backendUrl); // ✅ log it
-      console.log("Google Credential:", credentialResponse); // ✅ log it
+      console.log("Backend URL:", backendUrl);
+      console.log("Credential Response:", credentialResponse);
 
       const res = await axios.post(`${backendUrl}/api/auth/google`, {
         token: credentialResponse.credential,
@@ -18,7 +18,6 @@ const Login = () => {
 
       alert("Login successful!");
 
-      // Redirect based on role
       if (res.data.user.role === "student") {
         window.location.href = "/student";
       } else if (res.data.user.role === "teacher") {
@@ -26,8 +25,8 @@ const Login = () => {
       } else {
         window.location.href = "/choose-role";
       }
-    } catch (err) {
-      console.error("Login failed:", err);
+    } catch (error) {
+      console.error("Login failed:", error);
       alert("Login failed. Please try again.");
     }
   };

@@ -38,3 +38,5 @@ const handleSuccess = async (credentialResponse) => {
     alert("Login failed. Please try again.");
   }
 };
+
+export default Login;

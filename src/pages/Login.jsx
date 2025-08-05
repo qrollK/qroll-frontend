@@ -1,67 +1,40 @@
-import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import jwtDecode from "jwt-decode";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const handleSuccess = async (credentialResponse) => {
+  try {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-export default function LoginPage() {
-  const navigate = useNavigate();
+    console.log("Loaded Backend URL:", import.meta.env.VITE_BACKEND_URL);
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const { access_token } = tokenResponse;
+    const token = credentialResponse.credential;
 
-        // Fetch user info from Google using access token
-        const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        });
+    // ✅ Decode token to get user info
+    const decoded = jwtDecode(token);
+    const userInfo = {
+      email: decoded.email,
+      name: decoded.name,
+      picture: decoded.picture,
+    };
 
-        // Send access_token and user info to backend
-        const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/auth/google`,
-          {
-            token: access_token,
-            userInfo: userInfoRes.data,
-          }
-        );
+    const res = await axios.post(`${backendUrl}/api/auth/google`, {
+      token,
+      userInfo,
+    });
 
-        localStorage.setItem("token", res.data.token);
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
 
-        const user = res.data.user;
+    alert("Login successful!");
 
-        if (!user.role) {
-          navigate("/choose-role");
-        } else if (user.role === "student") {
-          navigate("/student");
-        } else {
-          navigate("/teacher");
-        }
-      } catch (err) {
-        console.error("Login error", err);
-      }
-    },
-    onError: () => {
-      console.error("Google Login Failed");
-    },
-  });
-
-  return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <div className="flex items-center justify-center min-h-screen bg-black text-white">
-        <div className="text-center space-y-6">
-          <h1 className="text-4xl font-bold">Welcome to Qroll</h1>
-          <p className="text-sm text-gray-400">Login to continue</p>
-          <button
-            onClick={() => login()}
-            className="bg-white text-black px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-100 transition"
-          >
-            Sign in with Google
-          </button>
-        </div>
-      </div>
-    </GoogleOAuthProvider>
-  );
-}
+    if (res.data.user.role === "student") {
+      window.location.href = "/student";
+    } else if (res.data.user.role === "teacher") {
+      window.location.href = "/teacher";
+    } else {
+      window.location.href = "/choose-role";
+    }
+  } catch (err) {
+    console.error("Login failed:", err);
+    alert("Login failed. Please try again.");
+  }
+};

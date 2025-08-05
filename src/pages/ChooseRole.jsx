@@ -8,7 +8,7 @@ const ChooseRole = () => {
   const handleRoleSelect = async (role) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/set-role`,
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/set-role`,
         { role },
         { headers: { Authorization: `Bearer ${token}` } }
       );

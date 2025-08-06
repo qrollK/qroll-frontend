@@ -31,7 +31,7 @@ const StudentDashboard = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/mark`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/attendance/mark`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -19,9 +19,9 @@ const ChooseRole = () => {
 
       // Redirect based on role
       if (role === "student") {
-        navigate("/student/dashboard");
+        navigate("/student");
       } else if (role === "teacher") {
-        navigate("/teacher/dashboard");
+        navigate("/teacher");
       }
     } catch (err) {
       console.error("Failed to set role:", err);

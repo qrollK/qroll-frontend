@@ -1,54 +1,89 @@
-import React from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 
-const ChooseRole = () => {
-  const navigate = useNavigate();
+const StudentDashboard = () => {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState(null);
 
-  const handleRoleSelect = async (role) => {
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/sessions/active`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        setSessions(data.sessions || []);
+      } catch (err) {
+        setMessage("❌ Failed to load sessions.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, []);
+
+  const handleMarkAttendance = async (sessionId) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/set-role`,
-        { role },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
 
-      // Update local user object
-      const updatedUser = res.data.user;
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/mark`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sessionId }),
+      });
 
-      // Redirect based on role
-      if (role === "student") {
-        navigate("/student");
-      } else if (role === "teacher") {
-        navigate("/teacher");
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("✅ Attendance marked successfully!");
+      } else {
+        setMessage(data.message || "❌ Failed to mark attendance.");
       }
     } catch (err) {
-      console.error("Failed to set role:", err);
+      setMessage("❌ Error marking attendance.");
     }
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md text-center">
-        <h2 className="text-2xl font-semibold mb-4">Choose Your Role</h2>
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={() => handleRoleSelect("student")}
-            className="bg-blue-500 text-white py-2 px-6 rounded hover:bg-blue-600 transition"
-          >
-            I’m a Student
-          </button>
-          <button
-            onClick={() => handleRoleSelect("teacher")}
-            className="bg-green-500 text-white py-2 px-6 rounded hover:bg-green-600 transition"
-          >
-            I’m a Teacher
-          </button>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-2xl font-bold mb-6">🎓 Student Dashboard</h1>
+
+      {message && (
+        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded">
+          {message}
         </div>
-      </div>
+      )}
+
+      {loading ? (
+        <p>Loading sessions...</p>
+      ) : sessions.length === 0 ? (
+        <p>No active sessions available right now.</p>
+      ) : (
+        <div className="grid gap-4">
+          {sessions.map((session) => (
+            <div key={session._id} className="p-4 bg-white rounded shadow">
+              <h2 className="text-lg font-semibold">{session.title}</h2>
+              <p>{session.date} • {session.time}</p>
+              <button
+                onClick={() => handleMarkAttendance(session._id)}
+                className="mt-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+              >
+                Mark Attendance
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default ChooseRole;
+export default StudentDashboard;

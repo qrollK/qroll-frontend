@@ -9,7 +9,7 @@ const StudentDashboard = () => {
     const fetchSessions = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/sessions/active`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sessions/active`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -1,28 +1,89 @@
-import { useState } from 'react';
-import API from '../api';
+import React, { useEffect, useState } from "react";
 
-export default function StudentDashboard() {
-  const [sessionId, setSessionId] = useState('');
-  const [enteredToken, setEnteredToken] = useState('');
-  const [location, setLocation] = useState({ lat: '', lng: '' });
+const StudentDashboard = () => {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState(null);
 
-  const markAttendance = async () => {
-    const res = await API.post('/attendance/submit', {
-      sessionId,
-      enteredToken,
-      location,
-    });
-    alert(res.data.message);
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/sessions/active`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        setSessions(data.sessions || []);
+      } catch (err) {
+        setMessage("❌ Failed to load sessions.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, []);
+
+  const handleMarkAttendance = async (sessionId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/mark`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("✅ Attendance marked successfully!");
+      } else {
+        setMessage(data.message || "❌ Failed to mark attendance.");
+      }
+    } catch (err) {
+      setMessage("❌ Error marking attendance.");
+    }
   };
 
   return (
-    <div>
-      <h2>Student Dashboard</h2>
-      <input placeholder="Session ID" value={sessionId} onChange={(e) => setSessionId(e.target.value)} />
-      <input placeholder="QR Token" value={enteredToken} onChange={(e) => setEnteredToken(e.target.value)} />
-      <input placeholder="Latitude" value={location.lat} onChange={(e) => setLocation({ ...location, lat: e.target.value })} />
-      <input placeholder="Longitude" value={location.lng} onChange={(e) => setLocation({ ...location, lng: e.target.value })} />
-      <button onClick={markAttendance}>Submit Attendance</button>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-2xl font-bold mb-6">🎓 Student Dashboard</h1>
+
+      {message && (
+        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded">
+          {message}
+        </div>
+      )}
+
+      {loading ? (
+        <p>Loading sessions...</p>
+      ) : sessions.length === 0 ? (
+        <p>No active sessions available right now.</p>
+      ) : (
+        <div className="grid gap-4">
+          {sessions.map((session) => (
+            <div key={session._id} className="p-4 bg-white rounded shadow">
+              <h2 className="text-lg font-semibold">{session.title}</h2>
+              <p>{session.date} • {session.time}</p>
+              <button
+                onClick={() => handleMarkAttendance(session._id)}
+                className="mt-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+              >
+                Mark Attendance
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default StudentDashboard;
